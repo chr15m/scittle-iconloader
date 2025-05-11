@@ -118,6 +118,15 @@
             ; Propagate so caller of wait-for-preload can catch
             (p/rejected error))))))
 
-(defn icon [svg]
-  [:i {:dangerouslySetInnerHTML
-       {:__html svg}}])
+(defn icon
+  "Render an SVG icon inside an [:i.icon ...].
+  Can be called as:
+  - `(icon svg)` = with just the SVG content
+  - `(icon attrs svg)` = with attributes and SVG content"
+  ([svg]
+   (icon {} svg))
+  ([attrs svg]
+   [:i.icon
+    (merge attrs
+           {:dangerouslySetInnerHTML
+            {:__html svg}})]))
