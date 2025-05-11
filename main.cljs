@@ -1,10 +1,11 @@
 (ns main
   (:require-macros
-    [iconloader :refer [svg-icon wait-for-preload svg-data]])
+    [iconloader :refer [load-icon wait-for-preload svg-data]])
   (:require
     [reagent.core :as r]
     [reagent.dom :as rdom]
-    [promesa.core :as p]))
+    [promesa.core :as p]
+    [iconloader :refer [icon]]))
 
 ;; --- Application Code ---
 (defonce app-state (r/atom {:loaded? false :error nil}))
@@ -15,10 +16,13 @@
      [:main
       [:h1 "SVG Icon Demo"]
       [:p "Icon 'icon.svg':"]
-      [:div {:dangerouslySetInnerHTML {:__html (svg-icon "icon.svg")}}]
+      [icon (load-icon "icon.svg")]
 
       [:p "Icon 'nonexistent.svg' (should show error placeholder):"]
-      [:div {:dangerouslySetInnerHTML {:__html (svg-icon "nonexistent.svg")}}]
+      [icon (load-icon "nonexistent.svg")]
+
+      [:p "Second 'thumb-up.svg':"]
+      [icon (load-icon "thumb-up.svg")]
 
       (when-let [err (:error @app-state)]
         [:div {:style {:color "red" :margin-top "1em" :font-weight "bold"}}
