@@ -12,7 +12,7 @@ A Scittle ClojureScript library for preloading and using SVG icons in your Reage
 ### Basic Setup
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/chr15m/scittle-iconloader/iconloader.cljs"></script>
+<script type="application/x-scittle" src="https://cdn.jsdelivr.net/gh/chr15m/scittle-iconloader/iconloader.cljs"></script>
 ```
 
 ```clojure
