@@ -22,6 +22,15 @@
 ;; Atom to store all unique fetch promises for wait-for-preload
 (defonce svg-fetch-master-promise-list (atom []))
 
+;; Placeholder SVG for icons that failed to load (a red X)
+(defonce error-placeholder-svg
+  (str
+    "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\""
+    "viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"red\" stroke-width=\"2\">"
+    "<line x1=\"18\" y1=\"6\" x2=\"6\" y2=\"18\"></line>"
+    "<line x1=\"6\" y1=\"6\" x2=\"18\" y2=\"18\"></line>"
+    "<title>Error loading icon</title></svg>"))
+
 (defmacro load-icon [icon-filename]
   (assert (string? icon-filename) "icon-filename must be a string.")
 
@@ -62,7 +71,9 @@
                                   full-icon-path) error)
                            ; Mark as error using full-icon-path
                            (swap! svg-data assoc full-icon-path ::error)
-                           (p/rejected error))))] ; Propagate rejection for p/all
+                           ;; Resolve with ::error so p/all in wait-for-preload
+                           ;; doesn't reject due to this individual failure.
+                           (p/resolved ::error))))]
 
         ;; Store the promise in svg-data temporarily using full-icon-path.
         (swap! svg-data assoc full-icon-path fetch-promise)
@@ -85,7 +96,7 @@
            (js/console.error
              (str "SVG " ~full-icon-path
                   " failed to load, returning error placeholder."))
-           "<!-- SVG error -->") ; Placeholder for error
+           error-placeholder-svg) ; Use the red X SVG placeholder
 
          (string? data#)
          data# ; Actual SVG string
@@ -106,16 +117,19 @@
     (p/resolved true) ; No SVGs to load
     (-> (p/all @svg-fetch-master-promise-list)
         (p/then (fn [results]
-                  (js/console.log "[wait-for-preload] All SVG promises settled.")
+                  (js/console.log
+                    "[wait-for-preload]"
+                    "All SVG promises settled.")
                   results))
         (p/catch
           (fn [error]
-            ;; p/all rejects with the first error. Individual errors are already
-            ;; handled by load-icon macro's promise chain
-            ;; (logged and ::error stored).
+            ;; This catch is now for more fundamental errors in p/all
+            ;; or its preceding .then, not for individual SVG load failures,
+            ;; as those are handled to resolve with ::error.
             (js/console.error
-              "[wait-for-preload] One or more SVGs failed to load overall." error)
-            ; Propagate so caller of wait-for-preload can catch
+              "[wait-for-preload]"
+              "A critical error occurred during the preload process." error)
+            ; Propagate critical errors
             (p/rejected error))))))
 
 (defn icon
